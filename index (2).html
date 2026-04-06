@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LoanDesk — Keith Swistock</title>
+<style>
+:root {
+  --gold:#c9a84c; --bg:#f7f6f3; --surface:#fff; --surface2:#f1efe9;
+  --border:#e3dfd8; --text:#1a1a18; --text2:#6b6860; --text3:#9b9890;
+  --red:#dc2626; --red-bg:#fef2f2; --orange:#d97706; --orange-bg:#fffbeb;
+  --green:#16a34a; --green-bg:#f0fdf4; --blue:#2563eb; --blue-bg:#eff6ff;
+  --purple:#7c3aed; --purple-bg:#f5f3ff; --teal:#0891b2; --teal-bg:#ecfeff;
+  --r:10px; --sh:0 1px 3px rgba(0,0,0,.07);
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#111110; --surface:#1c1c1a; --surface2:#252523; --border:#2e2e2b;
+  --text:#f0ede8; --text2:#9b9890; --text3:#6b6860;
+  --red-bg:#2d1515; --orange-bg:#2d2010; --green-bg:#0f2d1a;
+  --blue-bg:#0f1e3d; --purple-bg:#1e1040; --teal-bg:#0a2030;
+}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+button,input,select,textarea{font-family:inherit;font-size:14px}
+
+/* NAV */
+nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:var(--sh)}
+.nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px;height:60px}
+.logo{width:36px;height:36px;background:var(--gold);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.brand-name{font-size:16px;font-weight:700}
+.brand-sub{font-size:11px;color:var(--text2)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+#last-upd{font-size:11px;color:var(--text3)}
+.btn-refresh{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer}
+.btn-refresh:hover{border-color:var(--gold);color:var(--gold)}
+
+/* TABS */
+.tab-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px}
+.tab-bar-inner{max-width:1100px;margin:0 auto;display:flex}
+.tab{background:none;border:none;border-bottom:2.5px solid transparent;padding:12px 18px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--gold);border-bottom-color:var(--gold)}
+.badge-count{background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px}
+
+main{max-width:1100px;margin:0 auto;padding:24px}
+.pane{display:none}
+.pane.on{display:block}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .15s}
+.stat:hover,.stat.on{border-color:var(--gold)}
+.stat.on{background:#fdf8ee}
+@media(prefers-color-scheme:dark){.stat.on{background:#2a2010}}
+.stat .lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text2)}
+.stat .num{font-size:28px;font-weight:700;margin:4px 0 0;line-height:1}
+
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:18px}
+.search-wrap input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px 10px 38px;font-size:14px;color:var(--text);outline:none;transition:border-color .15s}
+.search-wrap input:focus{border-color:var(--gold)}
+.search-wrap::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none}
+
+/* PIPELINE */
+.section{margin-bottom:6px}
+.sec-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;user-select:none;transition:background .15s}
+.sec-hdr:hover{background:var(--border)}
+.sec-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.sec-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);flex:1}
+.sec-ct{font-size:12px;font-weight:600;color:var(--text2);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2px 10px}
+.sec-chev{font-size:10px;color:var(--text3);transition:transform .2s}
+.sec-chev.open{transform:rotate(90deg)}
+.sec-body{border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);background:var(--surface);margin-bottom:10px;overflow:hidden}
+
+/* FILE ROWS */
+.file{border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.file:last-child{border-bottom:none}
+.file:hover{background:var(--surface2)}
+.file-main{display:flex;align-items:center;gap:12px;padding:11px 16px}
+.file-bar{width:3px;height:36px;border-radius:2px;flex-shrink:0}
+.file-info{flex:1;min-width:0}
+.file-name{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-meta{font-size:11px;color:var(--text2);margin-top:2px}
+.src-chip{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0}
+.src-kb{background:#fdf8ee;color:#8a5a00;border:1px solid #e8c96a}
+.src-at{background:var(--purple-bg);color:var(--purple);border:1px solid #c4b5fd}
+@media(prefers-color-scheme:dark){.src-kb{background:#2a2010}}
+.days-chip{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.d-past{background:var(--red-bg);color:var(--red)}
+.d-urgent{background:var(--red-bg);color:var(--red)}
+.d-warn{background:var(--orange-bg);color:var(--orange)}
+.d-ok{background:var(--green-bg);color:var(--green)}
+.toggle-arr{font-size:10px;color:var(--text3);flex-shrink:0}
+
+/* FILE DETAIL */
+.detail{background:var(--surface2);border-top:1px solid var(--border);padding:16px;display:none}
+.detail.open{display:block}
+.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 20px;margin-bottom:14px}
+.dl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:2px}
+.dv{font-size:13px;font-weight:600;word-break:break-word}
+.ms-track{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.ms-item{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px}
+.ms-done{background:var(--green-bg);color:var(--green);border:1px solid #86efac}
+.ms-todo{background:var(--surface);color:var(--text3);border:1px solid var(--border)}
+.act-row{display:flex;flex-wrap:wrap;gap:8px;padding-top:12px;border-top:1px solid var(--border)}
+.act{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+.act:hover{border-color:var(--text2)}
+.act-arive{background:#1a56db;color:#fff;border-color:#1a56db}
+.act-email{background:var(--gold);color:#fff;border-color:var(--gold)}
+.act-arive:hover{background:#1447c0}
+.act-email:hover{background:#b8963e}
+
+/* ALERT */
+.alert{background:var(--red-bg);border:1px solid #fca5a5;border-radius:var(--r);padding:12px 16px;margin-bottom:16px;font-size:13px;font-weight:500;color:var(--red);display:flex;align-items:center;gap:10px}
+
+/* TODOS */
+.add-bar{display:flex;gap:8px;margin-bottom:14px}
+.add-bar input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--text);outline:none}
+.add-bar input:focus{border-color:var(--gold)}
+.add-bar select{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;color:var(--text);cursor:pointer;outline:none}
+.add-bar .btn-add{background:var(--gold);color:#fff;border:none;border-radius:var(--r);padding:10px 18px;font-weight:700;cursor:pointer}
+.btn-auto{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer}
+.btn-auto:hover{border-color:var(--gold);color:var(--gold)}
+.todo-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+.todo-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background .1s}
+.todo-item:last-child{border-bottom:none}
+.todo-item:hover{background:var(--surface2)}
+.chk{width:18px;height:18px;border-radius:5px;border:2px solid var(--border);cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .15s}
+.chk.done{background:var(--green);border-color:var(--green);color:#fff}
+.todo-text{flex:1;font-size:13px}
+.todo-text.done{text-decoration:line-through;color:var(--text3)}
+.todo-file{font-size:11px;color:var(--text3);margin-top:2px}
+.pri{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0}
+.ph{background:var(--red-bg);color:var(--red)}
+.pm{background:var(--orange-bg);color:var(--orange)}
+.pl{background:var(--green-bg);color:var(--green)}
+.del-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:0 2px;line-height:1}
+.del-btn:hover{color:var(--red)}
+.sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:16px 0 8px}
+.empty{text-align:center;padding:40px;color:var(--text2)}
+.empty .big{font-size:36px;margin-bottom:8px}
+
+/* REMINDERS */
+.rem-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:var(--r);margin-bottom:8px}
+.rem-urgent{background:var(--red-bg);border:1px solid #fca5a5}
+.rem-warn{background:var(--orange-bg);border:1px solid #fcd34d}
+.rem-info{background:var(--blue-bg);border:1px solid #93c5fd}
+.rem-icon{font-size:20px;flex-shrink:0}
+.rem-text{font-size:13px;font-weight:600}
+.rem-sub{font-size:11px;color:var(--text2);margin-top:2px}
+
+/* EMAILS */
+.tmpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.tmpl-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s}
+.tmpl-card:hover,.tmpl-card.on{border-color:var(--gold)}
+.tmpl-card.on{background:#fdf8ee}
+@media(prefers-color-scheme:dark){.tmpl-card.on{background:#2a2010}}
+.tmpl-lbl{font-size:13px;font-weight:700;margin-bottom:3px}
+.tmpl-when{font-size:11px;color:var(--text2)}
+.compose{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.compose-row{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.compose-row label{font-size:12px;font-weight:600;color:var(--text2);white-space:nowrap;min-width:60px}
+.compose-row select,.compose-row input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);outline:none}
+.compose-row select:focus,.compose-row input:focus{border-color:var(--gold)}
+.email-ta{width:100%;min-height:300px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:13px;color:var(--text);line-height:1.6;resize:vertical;outline:none;font-family:inherit}
+.email-ta:focus{border-color:var(--gold)}
+.compose-acts{display:flex;gap:8px;margin-top:12px}
+.compose-acts button{border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);transition:all .15s}
+.compose-acts button:hover{border-color:var(--text2)}
+.btn-copy{background:var(--gold);color:#fff;border-color:var(--gold) !important}
+.btn-copy:hover{background:#b8963e !important}
+
+@media(max-width:700px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .detail-grid{grid-template-columns:1fr 1fr}
+  .tmpl-grid{grid-template-columns:1fr 1fr}
+  main{padding:16px}
+  nav{padding:0 16px}
+  .tab-bar{padding:0 8px}
+  .tab{padding:12px 10px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">🏠</div>
+    <div>
+      <div class="brand-name">LoanDesk</div>
+      <div class="brand-sub">👑 Kingdom Processing &nbsp;·&nbsp; 🫡 Bright Processing</div>
+    </div>
+    <div class="nav-right">
+      <span id="last-upd"></span>
+      <button class="btn-refresh" onclick="loadAll()">↻ Refresh</button>
+    </div>
+  </div>
+</nav>
+
+<div class="tab-bar">
+  <div class="tab-bar-inner">
+    <button class="tab on" onclick="showTab('pipeline',this)">Pipeline</button>
+    <button class="tab" onclick="showTab('todos',this)">To-Do <span class="badge-count" id="todo-ct"></span></button>
+    <button class="tab" onclick="showTab('reminders',this)">Reminders <span class="badge-count" id="rem-ct" style="background:var(--orange)"></span></button>
+    <button class="tab" onclick="showTab('emails',this)">Email Templates</button>
+  </div>
+</div>
+
+<main>
+  <!-- PIPELINE -->
+  <div id="pane-pipeline" class="pane on">
+    <div class="stats" id="stat-row"></div>
+    <div id="alert-area"></div>
+    <div class="search-wrap"><input id="srch" placeholder="Search borrower, lender, status..." oninput="renderPipeline()"></div>
+    <div id="pipeline-body"><div class="empty"><div class="big">⏳</div>Loading your pipeline...</div></div>
+  </div>
+
+  <!-- TODOS -->
+  <div id="pane-todos" class="pane">
+    <div class="add-bar">
+      <input id="task-in" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addTodo()">
+      <select id="task-pri"><option value="high">🔴 High</option><option value="medium" selected>🟡 Medium</option><option value="low">🟢 Low</option></select>
+      <button class="btn-add" onclick="addTodo()">+ Add</button>
+      <button class="btn-auto" onclick="autoGen()">⚡ Auto-generate</button>
+    </div>
+    <div id="todo-body"></div>
+  </div>
+
+  <!-- REMINDERS -->
+  <div id="pane-reminders" class="pane">
+    <div id="rem-body"><div class="empty"><div class="big">⏳</div>Loading...</div></div>
+  </div>
+
+  <!-- EMAILS -->
+  <div id="pane-emails" class="pane">
+    <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Pick a template, select a borrower — email auto-fills with their real info. Edit freely and copy to send.</p>
+    <div class="tmpl-grid" id="tmpl-grid"></div>
+    <div class="compose">
+      <div class="compose-row">
+        <label>Borrower</label>
+        <select id="email-borrower" onchange="populateEmail()"><option value="">Select borrower...</option></select>
+      </div>
+      <textarea class="email-ta" id="email-body" placeholder="Select a template and borrower above..."></textarea>
+      <div class="compose-acts">
+        <button class="btn-copy" onclick="copyEmail()">📋 Copy</button>
+        <button onclick="openMail()">✉️ Open in Mail</button>
+        <button onclick="document.getElementById('email-body').value=''">🗑 Clear</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ─── STAGES ──────────────────────────────────────────────────────────────────
+const AT_STAGES = [
+  {key:'LOAN_SETUP',             label:'Loan Setup',             color:'#ef4444'},
+  {key:'DISCLOSURE',             label:'Disclosures',            color:'#f59e0b'},
+  {key:'UNDERWRITING_SUBMITTED', label:'In Underwriting',        color:'#3b82f6'},
+  {key:'RE_SUBMITTAL',           label:'Re-Submittal',           color:'#06b6d4'},
+  {key:'APPROVED_WITH_CONDITION',label:'Approved w/ Conditions', color:'#8b5cf6'},
+  {key:'CLEAR_TO_CLOSE',         label:'Clear to Close',         color:'#16a34a'},
+];
+const KB_STAGES = [
+  {key:'AWC',       label:'Approved w/ Conditions', color:'#8b5cf6'},
+  {key:'SUBMITTED', label:'Submitted to UW',        color:'#3b82f6'},
+  {key:'DISC',      label:'Disclosures',            color:'#f59e0b'},
+  {key:'PREV',      label:'Previously Submitted',   color:'#06b6d4'},
+  {key:'NEW',       label:'New File',               color:'#ef4444'},
+  {key:'CTC',       label:'Clear to Close',         color:'#16a34a'},
+  {key:'OTHER',     label:'Other Active',            color:'#6b7280'},
+];
+
+const MILESTONE_TASKS = {
+  LOAN_SETUP:              [['Send processor intro email to borrower','high'],['Order appraisal if applicable','high'],['Request initial docs','medium']],
+  DISCLOSURE:              [['Confirm disclosures sent — follow up if unsigned after 24hrs','high']],
+  UNDERWRITING_SUBMITTED:  [['Confirm file in lender portal','high'],['Note submission date for SLA','medium']],
+  APPROVED_WITH_CONDITION: [['Send conditions checklist to borrower','high'],['Order VVOE if not done','high'],['Follow up on outstanding conditions','medium']],
+  CLEAR_TO_CLOSE:          [['Send CTC email to borrower and agent','high'],['Invite title company','high'],['Confirm closing time and location','high']],
+  AWC:                     [['Send conditions checklist to borrower','high'],['Follow up on outstanding conditions','medium']],
+  CTC:                     [['Send CTC email to borrower and agent','high'],['Confirm closing details','high']],
+};
+
+const TEMPLATES = [
+  {id:'intro',      label:'Processor Intro',    when:'Loan Setup',
+    body: f=>`Subject: Welcome! Your Loan Processor — ${f.name}\n\nHi ${fn(f.name)},\n\nMy name is Keith Swistock and I'll be your loan processor for your ${f.purpose||''} loan${f.address?' at '+f.address:''}.\n\nHere's what to expect:\n- I'm your main point of contact throughout processing\n- I'll update you at every major milestone\n- If I need additional documents, I'll reach out promptly\n\nYour target closing date is ${fd(f.closing)}. Let's stay on track together!\n\nDon't hesitate to reach out with any questions.\n\nBest,\nKeith Swistock\nLoan Processor | Bright Processing\nkeith@brightproc.com`},
+  {id:'conditions', label:'Conditions Checklist', when:'Approved w/ Conditions',
+    body: f=>`Subject: Great News — Loan Approved! Outstanding Conditions — ${f.name}\n\nHi ${fn(f.name)},\n\nYour loan has been conditionally approved by ${f.lender||'the lender'}!\n\nTo move forward toward your ${fd(f.closing)} closing, we need the following:\n\n☐ Updated pay stubs (within 30 days)\n☐ Explanation letter for any large deposits\n☐ Updated bank statements (all pages)\n☐ Any other items conditioned for by underwriting\n\nPlease send these as soon as possible.\n\nBest,\nKeith Swistock\nkeith@brightproc.com`},
+  {id:'ctc',        label:'Clear to Close',      when:'Clear to Close',
+    body: f=>`Subject: 🎉 CLEAR TO CLOSE! — ${f.name}\n\nHi ${fn(f.name)},\n\nCongratulations — you are CLEAR TO CLOSE!\n\nClosing Details:\n• Date: ${fd(f.closing)}\n• Property: ${f.address||'your property'}\n• Lender: ${f.lender||''}\n\nNext Steps:\n1. The title company will contact you to confirm closing time and location\n2. You'll receive your final CD at least 3 business days before closing\n3. Bring a valid ID and remaining closing funds (cashier's check or wire)\n\nThank you for trusting me with your loan!\n\nBest,\nKeith Swistock\nkeith@brightproc.com`},
+  {id:'status',     label:'General Update',      when:'Any milestone',
+    body: f=>`Subject: Loan Status Update — ${f.name}\n\nHi ${fn(f.name)},\n\nQuick update on your ${f.purpose||''} loan:\n\nStatus: ${(f.status||'').replace(/_/g,' ')}\nClosing Date: ${fd(f.closing)}\nLender: ${f.lender||''}\n\nEverything is on track. I'll keep you updated at each milestone.\n\nBest,\nKeith Swistock\nkeith@brightproc.com`},
+  {id:'lock',       label:'Lock Expiring Soon',  when:'Lock within 7 days',
+    body: f=>`Subject: ⚠️ URGENT: Rate Lock Expiring — ${f.name}\n\nHi ${fn(f.name)},\n\nYour rate lock expires on ${fd(f.lock)}. To protect your current rate we need to keep your file moving toward your ${fd(f.closing)} closing.\n\nPlease send any outstanding items immediately.\n\nKeith Swistock\nkeith@brightproc.com`},
+  {id:'fudate',     label:'Follow-Up',           when:'Scheduled follow-up',
+    body: f=>`Subject: Following Up — ${f.name}\n\nHi ${fn(f.name)},\n\nFollowing up on your ${f.purpose||''} loan.\n\nStatus: ${(f.status||'').replace(/_/g,' ')}\nClosing Date: ${fd(f.closing)}\n\nPlease let me know if you have any updates or need anything from me!\n\nBest,\nKeith Swistock\nkeith@brightproc.com`},
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let atFiles=[], kbFiles=[], todos=[], sf=null, openSec=new Set(), openFiles=new Set(), tmplId='status';
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+const fd = d => { if(!d) return '—'; try{ return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }catch{return d;} };
+const fds= d => { if(!d) return '—'; try{ return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}); }catch{return d;} };
+const fm = v => v ? '$'+Math.round(v).toLocaleString() : '—';
+const fn = name => { if(!name) return 'there'; const p=name.split(','); return p.length>1?p[1].trim().split(' ')[0]:name.split(' ')[0]; };
+const dtd= d => { if(!d) return null; const n=new Date(); n.setHours(0,0,0,0); return Math.round((new Date(d+'T12:00:00')-n)/86400000); };
+const esc= s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function dayChip(days) {
+  if(days===null||days===undefined) return '';
+  if(days<0)  return `<span class="days-chip d-past">Past ${Math.abs(days)}d</span>`;
+  if(days<=7) return `<span class="days-chip d-urgent">${days}d left</span>`;
+  if(days<=14)return `<span class="days-chip d-warn">${days}d left</span>`;
+  return `<span class="days-chip d-ok">${days}d</span>`;
+}
+
+function getStatusKey(s) {
+  if(!s) return 'OTHER';
+  if(s==='LOAN_SETUP') return 'LOAN_SETUP';
+  if(s.includes('DISCLOSURE')) return 'DISCLOSURE';
+  if(s==='UNDERWRITING_SUBMITTED') return 'UNDERWRITING_SUBMITTED';
+  if(s==='RE_SUBMITTAL') return 'RE_SUBMITTAL';
+  if(s.includes('APPROVED')) return 'APPROVED_WITH_CONDITION';
+  if(s.includes('CLEAR')) return 'CLEAR_TO_CLOSE';
+  return 'OTHER';
+}
+
+function getKBStageKey(s) {
+  if(!s) return 'OTHER';
+  const u=s.toUpperCase();
+  if(u==='AWC'||u.includes('AWC')) return 'AWC';
+  if(u==='DISC'||u.includes('DISC')) return 'DISC';
+  if(u==='PREV') return 'PREV';
+  if(u==='NEW') return 'NEW';
+  if(u==='CTC'||u.includes('CTC')) return 'CTC';
+  if(u.includes('SUBMIT')) return 'SUBMITTED';
+  return 'OTHER';
+}
+
+const allFiles = () => [...atFiles, ...kbFiles];
+
+// ─── DATA LOADING ─────────────────────────────────────────────────────────────
+async function loadAll() {
+  document.getElementById('last-upd').textContent = 'Loading...';
+  await Promise.allSettled([loadBright(), loadKingdom()]);
+  // Open all sections by default
+  AT_STAGES.forEach(s=>openSec.add('at_'+s.key));
+  KB_STAGES.forEach(s=>openSec.add('kb_'+s.key));
+  renderAll();
+  document.getElementById('last-upd').textContent = 'Updated ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
+
+async function loadBright() {
+  try {
+    const r = await fetch('/.netlify/functions/bright');
+    if(!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    atFiles = (d.records||[]).map(f=>({...f, source:'Airtable', statusKey:getStatusKey(f.status), days:f.closing?dtd(f.closing):null}));
+  } catch(e) { console.error('Bright error:',e); atFiles=[]; }
+}
+
+async function loadKingdom() {
+  try {
+    const r = await fetch('/.netlify/functions/kingdom');
+    if(!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    kbFiles = (d.files||[]).map(f=>({...f, source:'Kingdom', statusKey:getKBStageKey(f.status), days:f.closing?dtd(f.closing):null}));
+  } catch(e) { console.error('Kingdom error:',e); kbFiles=[]; }
+}
+
+// ─── RENDER ALL ───────────────────────────────────────────────────────────────
+function renderAll() { renderStats(); renderPipeline(); renderTodos(); renderReminders(); renderEmails(); }
+
+// ─── STATS ────────────────────────────────────────────────────────────────────
+function renderStats() {
+  const all=allFiles();
+  const ctc=all.filter(f=>f.statusKey==='CLEAR_TO_CLOSE'||f.statusKey==='CTC').length;
+  const urg=all.filter(f=>f.days!==null&&f.days>=0&&f.days<=7).length;
+  const stats=[
+    {l:'🫡 Bright Files', n:atFiles.length, c:'#8b5cf6', f:'bright'},
+    {l:'👑 Kingdom Files',n:kbFiles.length, c:'#c9a84c', f:'kingdom'},
+    {l:'Clear to Close',  n:ctc,            c:'#16a34a', f:'ctc'},
+    {l:'Closing ≤7 days', n:urg,            c:'#dc2626', f:'urgent'},
+  ];
+  document.getElementById('stat-row').innerHTML = stats.map(s=>
+    `<div class="stat${sf===s.f?' on':''}" onclick="setSF('${s.f}')">
+      <div class="lbl">${s.l}</div>
+      <div class="num" style="color:${s.c}">${s.n}</div>
+    </div>`).join('');
+
+  const crit=all.filter(f=>f.days!==null&&f.days>=0&&f.days<=3);
+  document.getElementById('alert-area').innerHTML = crit.length
+    ? `<div class="alert">🚨 <strong>${crit.length} file(s) closing within 3 days:</strong> ${crit.map(f=>f.name.split(',')[0]+' ('+fds(f.closing)+')').join(', ')}</div>`
+    : '';
+
+  const remC=all.filter(f=>f.days!==null&&f.days>=0&&f.days<=14).length;
+  document.getElementById('rem-ct').textContent=remC||'';
+  document.getElementById('todo-ct').textContent=todos.filter(t=>!t.done).length||'';
+}
+
+function setSF(f){sf=sf===f?null:f; renderStats(); renderPipeline();}
+
+// ─── PIPELINE ─────────────────────────────────────────────────────────────────
+function filteredFiles() {
+  let files=allFiles();
+  if(sf==='bright')  files=atFiles;
+  else if(sf==='kingdom') files=kbFiles;
+  else if(sf==='ctc') files=files.filter(f=>f.statusKey==='CLEAR_TO_CLOSE'||f.statusKey==='CTC');
+  else if(sf==='urgent') files=files.filter(f=>f.days!==null&&f.days>=0&&f.days<=7);
+  const q=(document.getElementById('srch')?.value||'').toLowerCase();
+  if(q) files=files.filter(f=>(f.name+f.lender+(f.status||'')+f.type+f.purpose+(f.address||'')).toLowerCase().includes(q));
+  return files;
+}
+
+function renderPipeline() {
+  const files=filteredFiles();
+  const body=document.getElementById('pipeline-body');
+  if(!files.length){body.innerHTML='<div class="empty"><div class="big">🔍</div>No files match.</div>';return;}
+
+  let html='';
+
+  // Bright sections
+  for(const stage of AT_STAGES){
+    const sf=files.filter(f=>f.source==='Airtable'&&f.statusKey===stage.key).sort((a,b)=>(a.days??999)-(b.days??999));
+    if(!sf.length) continue;
+    const k='at_'+stage.key, open=openSec.has(k);
+    html+=`<div class="section">
+      <div class="sec-hdr" onclick="togSec('${k}')">
+        <div class="sec-dot" style="background:${stage.color}"></div>
+        <span class="sec-label">🫡 Bright · ${stage.label}</span>
+        <span class="sec-ct">${sf.length}</span>
+        <span class="sec-chev${open?' open':''}">▶</span>
+      </div>`;
+    if(open){html+=`<div class="sec-body">${sf.map(f=>fileRow(f,stage.color)).join('')}</div>`;}
+    html+=`</div>`;
+  }
+
+  // Kingdom sections
+  for(const stage of KB_STAGES){
+    const sf=files.filter(f=>f.source==='Kingdom'&&f.statusKey===stage.key).sort((a,b)=>(a.days??999)-(b.days??999));
+    if(!sf.length) continue;
+    const k='kb_'+stage.key, open=openSec.has(k);
+    html+=`<div class="section">
+      <div class="sec-hdr" onclick="togSec('${k}')">
+        <div class="sec-dot" style="background:${stage.color}"></div>
+        <span class="sec-label">👑 Kingdom · ${stage.label}</span>
+        <span class="sec-ct">${sf.length}</span>
+        <span class="sec-chev${open?' open':''}">▶</span>
+      </div>`;
+    if(open){html+=`<div class="sec-body">${sf.map(f=>fileRow(f,stage.color)).join('')}</div>`;}
+    html+=`</div>`;
+  }
+
+  body.innerHTML=html;
+}
+
+function fileRow(f, color) {
+  const isOpen=openFiles.has(f.id);
+  const days=f.closing?dtd(f.closing):f.days;
+  const src=f.source==='Kingdom'?'<span class="src-chip src-kb">Kingdom</span>':'<span class="src-chip src-at">Bright</span>';
+
+  let detailHtml='';
+  if(isOpen){
+    const ms=f.milestones;
+    const msHtml=ms?`<div style="grid-column:1/-1">
+      <div class="dl">Milestone Tracker</div>
+      <div class="ms-track">
+        ${Object.entries({Disclose:ms.disclose,Submit:ms.submit,'Appl Order':ms.applOrder,'Appl In':ms.applIn,'Title Order':ms.titleOrder,'Title In':ms.titleIn,'HOI Order':ms.hoiOrder,'HOI In':ms.hoiIn,'CD Sent':ms.cdSent,'CD Sign':ms.cdSign,VVOE:ms.vvoe})
+          .map(([k,v])=>`<span class="ms-item ${v?'ms-done':'ms-todo'}">${v?'✓':'○'} ${k}</span>`).join('')}
+      </div></div>`:'';
+    const ariveBtn=f.loanId?`<button class="act act-arive" onclick="event.stopPropagation();window.open('https://app.arive.com/loans/${f.loanId}','_blank')">↗ ARIVE</button>`:'';
+    const mailBtn=f.email?`<button class="act" onclick="event.stopPropagation();window.open('mailto:${f.email}?subject=Update - ${encodeURIComponent(f.name)}','_blank')">✉ Email</button>`:'';
+    const fEncoded=encodeURIComponent(JSON.stringify({id:f.id,name:f.name,status:f.status,statusKey:f.statusKey,closing:f.closing,lock:f.lock,lender:f.lender,type:f.type,purpose:f.purpose,address:f.address,email:f.email,amount:f.amount,mlo:f.mlo||''}));
+    detailHtml=`<div class="detail open">
+      <div class="detail-grid">
+        <div><div class="dl">Status</div><div class="dv">${esc((f.status||'').replace(/_/g,' '))}</div></div>
+        <div><div class="dl">Closing</div><div class="dv">${fd(f.closing)}${days!==null?' · '+days+'d':''}</div></div>
+        <div><div class="dl">Lock Expires</div><div class="dv">${fd(f.lock)}</div></div>
+        <div><div class="dl">Lender</div><div class="dv">${esc(f.lender)||'—'}</div></div>
+        <div><div class="dl">Type</div><div class="dv">${esc(f.type)} ${esc(f.purpose)}</div></div>
+        <div><div class="dl">Amount</div><div class="dv">${fm(f.amount)}</div></div>
+        ${f.address?`<div style="grid-column:1/-1"><div class="dl">Property</div><div class="dv">${esc(f.address)}</div></div>`:''}
+        ${f.email?`<div style="grid-column:1/-1"><div class="dl">Email</div><div class="dv">${esc(f.email)}</div></div>`:''}
+        ${f.loanId?`<div><div class="dl">ARIVE ID</div><div class="dv">${esc(f.loanId)}</div></div>`:''}
+        ${f.mlo?`<div><div class="dl">MLO</div><div class="dv">${esc(f.mlo)}</div></div>`:''}
+        ${f.fuDate?`<div><div class="dl">Follow-Up</div><div class="dv">${esc(f.fuDate)}</div></div>`:''}
+        ${msHtml}
+      </div>
+      <div class="act-row">
+        ${ariveBtn}${mailBtn}
+        <button class="act act-email" onclick="event.stopPropagation();draftFor('${fEncoded}')">Draft Email</button>
+        <button class="act" onclick="event.stopPropagation();addFileTask('${fEncoded}')">+ Task</button>
+      </div>
+    </div>`;
+  }
+
+  return`<div class="file" onclick="togFile('${f.id}')">
+    <div class="file-main">
+      <div class="file-bar" style="background:${color}"></div>
+      <div class="file-info">
+        <div class="file-name">${esc(f.name)}</div>
+        <div class="file-meta">${esc(f.type)} ${esc(f.purpose)} · ${esc(f.lender)} · ${fm(f.amount)}</div>
+      </div>
+      ${src}
+      <span style="font-size:12px;color:var(--text2)">${fds(f.closing)}</span>
+      ${dayChip(days)}
+      <span class="toggle-arr">${isOpen?'▲':'▼'}</span>
+    </div>
+    ${detailHtml}
+  </div>`;
+}
+
+function togSec(k){openSec.has(k)?openSec.delete(k):openSec.add(k); renderPipeline();}
+function togFile(id){openFiles.has(id)?openFiles.delete(id):openFiles.add(id); renderPipeline();}
+
+// ─── TODOS ────────────────────────────────────────────────────────────────────
+function renderTodos() {
+  const body=document.getElementById('todo-body');
+  const open=todos.filter(t=>!t.done), done=todos.filter(t=>t.done);
+  document.getElementById('todo-ct').textContent=open.length||'';
+  if(!todos.length){body.innerHTML='<div class="empty"><div class="big">✅</div>No tasks yet.<br>Click ⚡ Auto-generate to create tasks from your pipeline.</div>';return;}
+  const rows=arr=>arr.map(t=>`
+    <div class="todo-item">
+      <div class="chk${t.done?' done':''}" onclick="togTodo('${t.id}')">${t.done?'✓':''}</div>
+      <div style="flex:1;min-width:0">
+        <div class="todo-text${t.done?' done':''}">${esc(t.text)}</div>
+        ${t.file?`<div class="todo-file">${esc(t.file)}</div>`:''}
+      </div>
+      <span class="pri p${t.priority[0]}">${t.priority}</span>
+      <button class="del-btn" onclick="delTodo('${t.id}')">×</button>
+    </div>`).join('');
+  body.innerHTML=`<div class="todo-card">${rows(open)}</div>`+(done.length?`<div class="sec-title">Completed</div><div class="todo-card">${rows(done)}</div>`:'');
+}
+
+function addTodo(){
+  const i=document.getElementById('task-in'),p=document.getElementById('task-pri').value;
+  if(!i.value.trim()) return;
+  todos.unshift({id:Date.now()+'',text:i.value.trim(),done:false,priority:p});
+  i.value=''; renderTodos(); renderStats();
+}
+function togTodo(id){todos=todos.map(t=>t.id===id?{...t,done:!t.done}:t); renderTodos(); renderStats();}
+function delTodo(id){todos=todos.filter(t=>t.id!==id); renderTodos(); renderStats();}
+
+function addFileTask(enc){
+  const f=JSON.parse(decodeURIComponent(enc));
+  todos.unshift({id:Date.now()+'',text:`Follow up: ${f.name} — ${(f.status||'').replace(/_/g,' ')}`,done:false,priority:'high',file:`${f.mlo||f.source} · Closes ${fds(f.closing)}`});
+  renderTodos(); renderStats();
+  showTab('todos',document.querySelectorAll('.tab')[1]);
+}
+
+function autoGen(){
+  const all=allFiles(), newT=[];
+  for(const f of all){
+    const tasks=MILESTONE_TASKS[f.statusKey]||[];
+    for(const [text,priority] of tasks){
+      if(!todos.find(x=>x.text===text&&x.file&&x.file.includes(f.name)))
+        newT.push({id:Date.now()+'_'+Math.random(),text,done:false,priority,file:`${f.name} · ${f.source} · Closes ${fds(f.closing)}`});
+    }
+    const days=f.closing?dtd(f.closing):f.days;
+    if(days!==null&&days>=0&&days<=5&&!todos.find(x=>x.text.includes('Confirm closing')&&x.file?.includes(f.name)))
+      newT.push({id:Date.now()+'_cl'+Math.random(),text:`Confirm closing details — ${f.name}`,done:false,priority:'high',file:`Closes ${fds(f.closing)}`});
+    if(f.lock){const ld=dtd(f.lock);if(ld!==null&&ld>=0&&ld<=7&&!todos.find(x=>x.text.includes('lock')&&x.file?.includes(f.name)))
+      newT.push({id:Date.now()+'_lk'+Math.random(),text:`Rate lock expiring — ${f.name}`,done:false,priority:'high',file:`Lock expires ${fds(f.lock)}`});}
+  }
+  todos=[...newT,...todos]; renderTodos(); renderStats();
+  showTab('todos',document.querySelectorAll('.tab')[1]);
+  if(newT.length) alert(`✅ Generated ${newT.length} tasks from your pipeline!`);
+}
+
+// ─── REMINDERS ────────────────────────────────────────────────────────────────
+function renderReminders(){
+  const all=allFiles(), items=[];
+  for(const f of all){
+    const days=f.closing?dtd(f.closing):f.days;
+    if(days!==null){
+      if(days<0)   items.push({l:'urgent',i:'🚨',t:`${f.name} — closing PAST DUE (${fds(f.closing)})`,s:f.source,d:days});
+      else if(days<=3)  items.push({l:'urgent',i:'⏰',t:`${f.name} — closing in ${days} day${days!==1?'s':''} (${fds(f.closing)})`,s:f.source,d:days});
+      else if(days<=7)  items.push({l:'urgent',i:'📅',t:`${f.name} — closing in ${days} days (${fds(f.closing)})`,s:f.source,d:days});
+      else if(days<=14) items.push({l:'warn',  i:'📋',t:`${f.name} — closing in ${days} days (${fds(f.closing)})`,s:f.source,d:days});
+    }
+    if(f.lock){const ld=dtd(f.lock);if(ld!==null&&ld>=0&&ld<=7)
+      items.push({l:ld<=3?'urgent':'warn',i:'🔒',t:`${f.name} — lock expires in ${ld} day${ld!==1?'s':''} (${fds(f.lock)})`,s:f.source+' · Lock',d:ld});}
+    if(f.fuDate){const fd2=dtd(f.fuDate);if(fd2!==null&&fd2>=0&&fd2<=3)
+      items.push({l:'info',i:'📞',t:`${f.name} — follow-up scheduled ${fds(f.fuDate)}`,s:'Kingdom · Follow-up',d:fd2});}
+  }
+  items.sort((a,b)=>a.d-b.d);
+  document.getElementById('rem-ct').textContent=items.length||'';
+  const body=document.getElementById('rem-body');
+  if(!items.length){body.innerHTML='<div class="empty"><div class="big">✅</div>No urgent reminders — all files look on track!</div>';return;}
+  body.innerHTML=items.map(r=>`<div class="rem-item rem-${r.l}">
+    <span class="rem-icon">${r.i}</span>
+    <div><div class="rem-text">${esc(r.t)}</div><div class="rem-sub">${esc(r.s)}</div></div>
+  </div>`).join('');
+}
+
+// ─── EMAILS ───────────────────────────────────────────────────────────────────
+function renderEmails(){
+  document.getElementById('tmpl-grid').innerHTML=TEMPLATES.map(t=>
+    `<div class="tmpl-card${tmplId===t.id?' on':''}" onclick="selTmpl('${t.id}')">
+      <div class="tmpl-lbl">${t.label}</div>
+      <div class="tmpl-when">When: ${t.when}</div>
+    </div>`).join('');
+  const sel=document.getElementById('email-borrower');
+  const prev=sel.value;
+  sel.innerHTML='<option value="">Select borrower...</option>'+allFiles().map(f=>`<option value="${f.id}">${esc(f.name)} (${f.source})</option>`).join('');
+  if(prev) sel.value=prev;
+}
+
+function selTmpl(id){tmplId=id; renderEmails(); populateEmail();}
+
+function populateEmail(){
+  const sel=document.getElementById('email-borrower');
+  const f=allFiles().find(x=>x.id===sel.value);
+  const tmpl=TEMPLATES.find(t=>t.id===tmplId);
+  if(!tmpl) return;
+  const blank={name:'[Borrower Name]',address:'[Property]',closing:'',lock:'',lender:'[Lender]',type:'',purpose:'',status:tmpl.when,loanId:'',email:'',amount:0};
+  document.getElementById('email-body').value=tmpl.body(f||blank);
+}
+
+function draftFor(enc){
+  const f=JSON.parse(decodeURIComponent(enc));
+  let tid='status';
+  if(f.statusKey==='LOAN_SETUP') tid='intro';
+  else if(f.statusKey==='APPROVED_WITH_CONDITION'||f.statusKey==='AWC') tid='conditions';
+  else if(f.statusKey==='CLEAR_TO_CLOSE'||f.statusKey==='CTC') tid='ctc';
+  tmplId=tid;
+  showTab('emails',document.querySelectorAll('.tab')[3]);
+  setTimeout(()=>{
+    renderEmails();
+    const sel=document.getElementById('email-borrower');
+    let opt=sel.querySelector(`option[value="${f.id}"]`);
+    if(!opt){opt=document.createElement('option');opt.value=f.id;opt.textContent=f.name+' ('+f.source+')';sel.appendChild(opt);}
+    sel.value=f.id; populateEmail();
+  },50);
+}
+
+function copyEmail(){
+  const ta=document.getElementById('email-body');
+  navigator.clipboard.writeText(ta.value).then(()=>{
+    const b=event.target,o=b.textContent;b.textContent='✅ Copied!';setTimeout(()=>b.textContent=o,2000);
+  });
+}
+function openMail(){
+  const body=document.getElementById('email-body').value;
+  const lines=body.split('\n');
+  const subLine=lines.find(l=>l.startsWith('Subject:'));
+  const sub=subLine?subLine.replace('Subject:','').trim():'Loan Update';
+  const bdy=lines.filter(l=>!l.startsWith('Subject:')).join('\n').trim();
+  window.open(`mailto:?subject=${encodeURIComponent(sub)}&body=${encodeURIComponent(bdy)}`);
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function showTab(name,btn){
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  document.getElementById('pane-'+name).classList.add('on');
+  btn.classList.add('on');
+  if(name==='todos') renderTodos();
+  if(name==='reminders') renderReminders();
+  if(name==='emails') renderEmails();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+loadAll();
+</script>
+</body>
+</html>
